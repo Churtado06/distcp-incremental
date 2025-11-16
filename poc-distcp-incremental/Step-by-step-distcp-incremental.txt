@@ -1,0 +1,205 @@
+############################################################
+##      Create Dataproc Clusters with cluster pool        ##
+############################################################
+
+gcloud config set project robotic-subject-334619
+export PROJECT_ID=robotic-subject-334619
+export COMPOSER_ENVIRONMENT=distcp-orch
+
+###########################################
+###     Create Composer 1 environment   ###
+###########################################
+
+
+    gcloud composer environments create $COMPOSER_ENVIRONMENT \
+        --location us-central1 \
+        --zone=us-central1-a \
+        --airflow-configs=api-auth_backend=airflow.api.auth.backend.default
+
+##########################################
+###       Composer environment v2      ###
+##########################################
+
+# Set ServiceAgentV2Ext role to the service account 
+
+gcloud projects add-iam-policy-binding robotic-subject-334619 \
+    --member serviceAccount:service-783621314563@cloudcomposer-accounts.iam.gserviceaccount.com \
+    --role roles/composer.ServiceAgentV2Ext
+
+# Create the composer environment v2 
+
+gcloud beta composer environments create $COMPOSER_ENVIRONMENT \
+    --location us-central1 \
+    --airflow-configs=api-auth_backend=airflow.composer.api.backend.composer_auth \
+    --image-version composer-2.0.0-preview.4-airflow-2.1.2
+
+
+https://cloud.google.com/composer/docs/composer-2/access-airflow-api
+
+
+
+#######################################################
+##             Create two cluster pools              ##
+#######################################################
+
+### Create two cluster-pool that we are going to used in the Pull model to extract the data from On-premise cluster 
+
+gcloud dataproc clusters create cluster-pull-1 --region us-central1 --zone us-central1-a --single-node --master-machine-type n1-standard-2 --master-boot-disk-size 200 --image-version 2.0-debian10 --labels cluster-pool=pool-1 --project $PROJECT_ID
+gcloud dataproc clusters create cluster-pull-2 --region us-central1 --zone us-central1-a --single-node --master-machine-type n1-standard-2 --master-boot-disk-size 200 --image-version 2.0-debian10 --labels cluster-pool=pool-1 --project $PROJECT_ID
+
+
+
+#######################################################
+##                  Copy DAG to Airflow              ##
+#######################################################
+
+gcloud composer environments storage dags import --environment distcp-orch --location us-central1 --source airflow_parallel_distcp_dag.py
+
+
+
+
+####################################################
+##              Deploying cloud function          ##
+####################################################
+
+###############################
+####       Composer 1       ###
+###############################
+
+### Get AIRFLOW_URL
+
+AIRFLOW_URL=$(gcloud composer environments describe $COMPOSER_ENVIRONMENT --location us-central1 | grep airflowUri | cut -d":" -f2-)
+
+# Client ID 
+
+curl -v $AIRFLOW_URL 2>&1 >/dev/null | grep -o "client_id\=[A-Za-z0-9-]*\.apps\.googleusercontent\.com"
+
+*** Replace this client_id in the cloud function code (main.py)
+
+### Get webserver-id
+
+echo "${AIRFLOW_URL/"https://"/}"  | sed 's/.appspot.com//g' 
+
+*** Replace this webserver_id in the cloud function code (main.py)
+
+###############################
+####       Composer 2       ###
+###############################
+
+# Replace in the main.py file web_server_url and dag_id
+
+     gcloud composer environments describe distcp-orch \
+      --location=us-central1 \
+      --format="value(config.airflowUri)"
+
+
+
+
+
+### Define bucket names
+#
+
+export CLOUD_FUNCTION_BUCKET=cloud-function-bucket-groupon
+export TRIGGER_BUCKET_NAME=audit-file-distcp-bucket1
+
+## Create buckets
+gsutil mb -b on gs://$CLOUD_FUNCTION_BUCKET
+gsutil mb -b on gs://$TRIGGER_BUCKET_NAME
+
+
+##  Move to cloud_function_trigger_dag (Composer 1) or 
+##  cloud_function_composer2folder (Composer 2)
+
+# Composer 1
+cd cloud_function_trigger_dag/
+
+# Composer 2
+cd cloud_function_composer2/
+
+### Create zip
+
+# Composer 1
+zip -r main.zip main.py requirements.txt
+
+# Composer 2
+zip -r main.zip composer2_airflow_rest_api.py requirements.txt main.py
+
+### Copy zip file to bucket
+
+gsutil cp ./main.zip gs://$CLOUD_FUNCTION_BUCKET/main.zip
+
+###Deploy cloud function
+
+## Composer 1
+gcloud functions deploy trigger_dag_function --entry-point trigger_dag --runtime python37 --trigger-resource $TRIGGER_BUCKET_NAME --trigger-event google.storage.object.finalize --source gs://$CLOUD_FUNCTION_BUCKET/main.zip
+
+# Composer 2
+gcloud functions deploy trigger_dag_function --entry-point trigger_dag_gcf --runtime python37 --trigger-resource $TRIGGER_BUCKET_NAME --trigger-event google.storage.object.finalize --source gs://$CLOUD_FUNCTION_BUCKET/main.zip
+
+
+
+
+############################################################
+Initialization actions / dataset / create on-premise cluster 
+############################################################
+
+## Define bucket names
+
+export AUDIT_BUCKET=TRIGGER_BUCKET_NAME
+export DISTCP_BUCKET=dest-distcp-bucket-demo
+export SOURCE_FILES_DATA_BUCKET=source-files-data-onprem-groupon
+
+## Create buckets
+
+gsutil mb -b on gs://$DISTCP_BUCKET
+gsutil mb -b on gs://$SOURCE_FILES_DATA_BUCKET
+
+##Get back to the previous folder 
+cd ..
+
+## Copy dummy file
+
+gsutil cp ./input_data/titanic.csv gs://$SOURCE_FILES_DATA_BUCKET/input_data/titanic.csv
+
+
+----------------- modify in audit_hdfs_script.sh initialize_onprem_cluster=> USER NAME GOOGLE ----------------
+
+gsutil cp audit_hdfs_script.sh gs://$SOURCE_FILES_DATA_BUCKET/audit_hdfs_script.sh
+gsutil cp initialize_onprem_cluster.sh gs://$SOURCE_FILES_DATA_BUCKET/initialize_onprem_cluster.sh
+
+
+## Create the on-premise simulation cluster
+
+gcloud dataproc clusters create cluster-src --region us-central1 --zone us-central1-a --single-node --master-machine-type n1-standard-2 --master-boot-disk-size 200 --image-version 2.0-debian10 --project $PROJECT_ID --initialization-actions=gs://$SOURCE_FILES_DATA_BUCKET/initialize_onprem_cluster.sh
+
+
+
+####################################################################
+###                   Select cluster-src master                  ###
+####################################################################
+
+
+export CLUSTER=cluster-src
+export ZONE=us-central1 
+gcloud compute ssh --zone ${ZONE} ${CLUSTER}-m
+
+# Copy a new file inside the folder 1
+
+hdfs dfs -copyFromLocal titanic.csv folder_1/file_6.csv
+
+# Create a new directory
+
+hdfs dfs -mkdir folder_3/
+
+# Copy files in the folder_3
+
+hdfs dfs -copyFromLocal titanic.csv folder_3/file_7.csv
+hdfs dfs -copyFromLocal titanic.csv folder_3/file_8.csv
+
+
+
+# Remove cluster-src, cluster-pull-1 and cluster-pull-2
+
+gcloud dataproc clusters delete cluster-src --region us-central1
+gcloud dataproc clusters delete cluster-pull-1 --region us-central1
+gcloud dataproc clusters delete cluster-pull-2 --region us-central1

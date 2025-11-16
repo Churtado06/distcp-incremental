@@ -1,0 +1,2 @@
+export USER_NAME_GOOGLE=maxibarrios082
+* * * * * $USER_NAME_GOOGLE /root/$USER_NAME_GOOGLE.sh
