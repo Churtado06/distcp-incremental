@@ -1,0 +1,9 @@
+name: Issues workflow
+# Only will be triggered when a issue is created
+on: issues
+jobs: 
+    output-info:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Output event detailts
+              run: echo "${{ toJSON(github.event) }}"
