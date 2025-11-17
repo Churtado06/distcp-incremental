@@ -1,0 +1,1 @@
+# Simple test configuration - no GCP dependencies needed
