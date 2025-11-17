@@ -10,7 +10,10 @@ import requests
 AUTH_SCOPE = "https://www.googleapis.com/auth/cloud-platform"
 CREDENTIALS, _ = google.auth.default(scopes=[AUTH_SCOPE])
 
-def make_composer2_web_server_request(url: str, method: str = "GET", **kwargs: Any) -> google.auth.transport.Response:
+
+def make_composer2_web_server_request(
+    url: str, method: str = "GET", **kwargs: Any
+) -> google.auth.transport.Response:
     """
     Make a request to Cloud Composer 2 environment's web server.
     Args:
@@ -29,6 +32,7 @@ def make_composer2_web_server_request(url: str, method: str = "GET", **kwargs: A
         kwargs["timeout"] = 90
 
     return authed_session.request(method, url, **kwargs)
+
 
 def trigger_dag(web_server_url: str, dag_id: str, data: dict) -> str:
     """
