@@ -1,7 +1,7 @@
 #!/bin/sh
 export USER_NAME_GOOGLE=churtado_gcp1
 export SOURCE_FILES_DATA_BUCKET=source-files-data-distcp
-cd /home/$USER_NAME_GOOGLE
+cd /home/$USER_NAME_GOOGLE || exit
 
 gsutil cp gs://$SOURCE_FILES_DATA_BUCKET/input_data/titanic.csv /home/$USER_NAME_GOOGLE/titanic.csv
 gsutil cp gs://$SOURCE_FILES_DATA_BUCKET/audit_hdfs_script.sh /home/$USER_NAME_GOOGLE/audit_hdfs_script.sh
