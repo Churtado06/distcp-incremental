@@ -1,0 +1,55 @@
+name: Code Quality Checks
+
+on: 
+  #push:
+  #  branches:
+  #    'main'
+  pull_request:
+    types: [opened, reopened, synchronize]
+  workflow_dispatch:
+
+jobs:
+  code-quality-checks:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Get code
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+    
+    - name: Install dependencies
+      run: |
+        pip install -r distcp-incremental-tech-talk/cloud_function_composer2/requirements.txt
+        pip install pytest bandit
+    
+    - name: Install shell dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y shellcheck
+      
+    - name: Shell script validation
+      run: |
+        shellcheck distcp-incremental-tech-talk/*.sh
+        
+    - name: Security scan
+      run: bandit -r distcp-incremental-tech-talk/cloud_function_composer2/
+    
+    - name: Run unit tests (mocked)
+      run: pytest tests/ -v
+      continue-on-error: true
+
+  deployment:
+    needs: code-quality-checks
+    runs-on: ubuntu-latest
+    steps:
+    - name: Get code
+      uses: actions/checkout@v4
+    
+    - name: Deploy the latest version
+      run: |
+        echo "Deployment in progress ..."
+        echo "aws s3 sync ./distcp-incremental-tech-talk/ s3://my-bucket/ --delete "
