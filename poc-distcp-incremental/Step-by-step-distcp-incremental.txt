@@ -99,7 +99,7 @@ echo "${AIRFLOW_URL/"https://"/}"  | sed 's/.appspot.com//g'
 ### Define bucket names
 #
 
-export CLOUD_FUNCTION_BUCKET=cloud-function-bucket-groupon
+export CLOUD_FUNCTION_BUCKET=cloud-function-bucket
 export TRIGGER_BUCKET_NAME=audit-file-distcp-bucket1
 
 ## Create buckets
@@ -147,7 +147,7 @@ Initialization actions / dataset / create on-premise cluster
 
 export AUDIT_BUCKET=TRIGGER_BUCKET_NAME
 export DISTCP_BUCKET=dest-distcp-bucket-demo
-export SOURCE_FILES_DATA_BUCKET=source-files-data-onprem-groupon
+export SOURCE_FILES_DATA_BUCKET=source-files-data-onprem
 
 ## Create buckets
 

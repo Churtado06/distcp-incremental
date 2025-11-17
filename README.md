@@ -43,7 +43,7 @@
 
 ##  1. DistcCp Incremental POC using GCS sensor diagram <a name='DistcCpIncrementalPOCusingGCSsensordiagram'></a>
 
-The architecture prepared for this POC simulates a Groupon OnPrem. The simulated On-premise cluster runs a shell script to validate FILE CHANGES on the HDFS directories. Once changes are detected, it will write the directory and the cloud storage bucket destination in a key-value file. The shell script is scheduled to be executed Using cron every 5 minutes.  Then, the Key-Value file will be copied to a Google Cloud Storage bucket. This process is done using gsutil cp tool.
+The architecture prepared for this POC simulates a OnPrem System. The simulated On-premise cluster runs a shell script to validate FILE CHANGES on the HDFS directories. Once changes are detected, it will write the directory and the cloud storage bucket destination in a key-value file. The shell script is scheduled to be executed Using cron every 5 minutes.  Then, the Key-Value file will be copied to a Google Cloud Storage bucket. This process is done using gsutil cp tool.
 
 A DAG in Cloud Composer is scheduled to be triggered every 5 minutes. This DAG is using a GCS sensor that checks the existence of objects with a specific prefix in a bucket, if the GCS sensor detects objects with that prefix, the next task will submit a job or jobs depending on the number of lines in the file that was found in the bucket. These jobs are running in a dataproc cluster pool that consists of two clusters using the “PULL” model.  The job or jobs are going to execute the DISTCP to get the data from the on premise cluster with the PULL model implementation, having Google Cloud Storage as the sink.
 
@@ -83,7 +83,7 @@ export COMPOSER_ENVIRONMENT=distcp-orch
 
 export AUDIT_BUCKET=audit-file-distcp-bucket1
 export DISTCP_BUCKET=dest-distcp-bucket-demo
-export SOURCE_FILES_DATA_BUCKET=source-files-data-onprem-groupon
+export SOURCE_FILES_DATA_BUCKET=source-files-data-onprem
 
 export ONPREM_CLUSTER=cluster-src
 export REGION=us-central1
@@ -174,7 +174,7 @@ Click **i** to edit the file, copy the name in the second line. Then press **ESC
 
 ###  8.1. <a name='CopytheshellfilestotheSOURCE_FILES_DATA_BUCKETbucket'></a>6.4. Copy the  shell files to the $SOURCE_FILES_DATA_BUCKET bucket
 
-Once the **audit_hdfs_script.sh** was modified with the correct user name, copy the file **audit_hdfs_script.sh** and **initialize_onprem_cluster.sh** to the source-files-data-onprem-groupon bucket with the following commands:
+Once the **audit_hdfs_script.sh** was modified with the correct user name, copy the file **audit_hdfs_script.sh** and **initialize_onprem_cluster.sh** to the source-files-data-onprem bucket with the following commands:
 
 ```
 gsutil cp audit_hdfs_script.sh gs://$SOURCE_FILES_DATA_BUCKET/audit_hdfs_script.sh

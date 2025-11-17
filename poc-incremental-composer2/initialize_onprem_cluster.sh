@@ -1,6 +1,6 @@
 #!/bin/sh
 export USER_NAME_GOOGLE=churtado_gcp
-export SOURCE_FILES_DATA_BUCKET=source-files-data-onprem-groupon
+export SOURCE_FILES_DATA_BUCKET=source-files-data-onprem
 cd /home/USER_NAME_GOOGLE
 
 gsutil cp gs://$SOURCE_FILES_DATA_BUCKET/input_data/titanic.csv /home/$USER_NAME_GOOGLE/titanic.csv

@@ -2,8 +2,8 @@
 Create Dataproc Clusters with cluster pool
 ############################################################
 
-gcloud config set project groupon-poc-incremental-334512
-export PROJECT_ID=groupon-poc-incremental-334512
+gcloud config set project poc-incremental-334512
+export PROJECT_ID=poc-incremental-334512
 export COMPOSER_ENVIRONMENT=distcp-orch
 
 ### Create Composer environment
@@ -51,7 +51,7 @@ Initialization actions / dataset / create cluster on-premise
 
 export AUDIT_BUCKET=audit-file-distcp-bucket
 export DISTCP_BUCKET=dest-distcp-bucket-demo
-export SOURCE_FILES_DATA_BUCKET=source-files-data-onprem-groupon
+export SOURCE_FILES_DATA_BUCKET=source-files-data-onprem
 
 ## Create buckets
 gsutil mb -b on gs://$AUDIT_BUCKET
@@ -66,7 +66,7 @@ Deploying cloud function
 ####################################################
 
 ### Define bucket names
-export CLOUD_FUNCTION_BUCKET=cloud-function-bucket-groupon
+export CLOUD_FUNCTION_BUCKET=cloud-function-bucket
 export TRIGGER_BUCKET_NAME=audit-file-distcp-bucket
 
 ## Create buckets
