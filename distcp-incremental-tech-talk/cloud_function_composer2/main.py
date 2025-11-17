@@ -17,9 +17,9 @@ Trigger a DAG in a Cloud Composer 2 environment in response to an event,
 using Cloud Functions.
 """
 
-from typing import Any
 
 import composer2_airflow_rest_api
+
 
 def trigger_dag_gcf(data, context=None):
     """
@@ -40,8 +40,9 @@ def trigger_dag_gcf(data, context=None):
     # gcloud composer environments describe example-environment \
     #  --location=your-composer-region \
     #  --format="value(config.airflowUri)"
+    url = '3eed80d0e54a4be78b9dd56d2b2f63bd'
     web_server_url = (
-        "https://3eed80d0e54a4be78b9dd56d2b2f63bd-dot-us-central1.composer.googleusercontent.com"
+        f"https://{url}-dot-us-central1.composer.googleusercontent.com"
     )
     # Replace with the ID of the DAG that you want to run.
     dag_id = 'distcp_incremental_data_load'
