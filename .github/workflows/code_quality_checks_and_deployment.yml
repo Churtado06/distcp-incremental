@@ -1,4 +1,4 @@
-name: Code Quality Checks
+name: Code Quality Checks and Deployment
 
 on: 
   #push:
@@ -53,3 +53,4 @@ jobs:
       run: |
         echo "Deployment in progress ..."
         echo "aws s3 sync ./distcp-incremental-tech-talk/ s3://my-bucket/ --delete "
+        echo "Access to github context: ${{ toJson(github) }}"
