@@ -12,7 +12,7 @@ on:
     types: [opened, reopened, synchronize]
     # The Workflow will run only for PRs created againts main branch
     branches:
-      - main
+      - master
     # The workflow will not be triggered if there were changes in this folder
     paths-ignore: 
       - '.github/workflow'
