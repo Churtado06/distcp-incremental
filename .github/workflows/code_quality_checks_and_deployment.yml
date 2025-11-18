@@ -1,11 +1,21 @@
 name: Code Quality Checks and Deployment
 
 on: 
-  #push:
-  #  branches:
-  #    'main'
+  push:
+    branches:
+      - main
+      - 'dev-*' # All branches with `dev-` prefix
+      - 'feature/**' # Branches named feature/...
+      
   pull_request:
+    # This is the default
     types: [opened, reopened, synchronize]
+    # The Workflow will run only for PRs created againts main branch
+    branches:
+      - main
+    # The workflow will not be triggered if there were changes in this folder
+    paths-ignore: 
+      - '.github/workflow'
   workflow_dispatch:
 
 jobs:
