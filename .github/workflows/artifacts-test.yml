@@ -1,0 +1,143 @@
+name: Code Quality with Artifacts
+
+# Workflow demonstrates GitHub Actions features:
+# - Artifacts: Store files between jobs and for download
+# - Outputs: Pass data between jobs
+# - Cache: Speed up builds by caching dependencies
+# - Scripts: Organize complex logic in separate files
+
+on:
+  workflow_dispatch:  # Manual trigger from GitHub UI
+  push:
+    branches: [main, 'dev-*', 'feature/**']
+    paths-ignore: 
+    - '.github/workflows/**'
+    - 'README.md'
+    - 'docs/**'
+  pull_request:
+    # This is the default
+    types: [opened, reopened, synchronize]
+    # The Workflow will run only for PRs created againts main branch
+    branches:
+      - main
+
+jobs:
+  code-quality-with-artifacts:
+    runs-on: ubuntu-latest
+    
+    # JOB OUTPUTS: Pass data to dependent jobs
+    # These values come from step outputs and can be accessed by other jobs
+    outputs:
+      report-count: ${{ steps.count-reports.outputs.count }}  # Number of files generated
+      summary-file: ${{ steps.count-reports.outputs.summary }} # Name of summary file
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+    
+    # CACHE: Speeds up builds by storing pip downloads between runs
+    # Cache key includes OS and requirements.txt hash - invalidates when deps change
+    - name: Cache pip dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip                                        # Directory to cache
+        key: ${{ runner.os }}-pip-${{ hashFiles('.github/requirements.txt') }}  # Unique cache key
+        restore-keys: |                                           # Fallback keys if exact match not found
+          ${{ runner.os }}-pip-
+    
+    - name: Create results directory
+      run: mkdir -p quality-results
+    
+    - name: Install dependencies and save log
+      run: |
+        pip install -r .github/requirements.txt > quality-results/pip-install.log 2>&1
+        echo "Dependencies installed at $(date)" >> quality-results/pip-install.log
+    
+    - name: Install shell dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y shellcheck
+    
+    - name: Shell script validation
+      run: ./.github/scripts/run-shellcheck.sh
+    
+    - name: Security scan with Bandit
+      run: ./.github/scripts/run-security-scan.sh
+    
+    - name: Flake8 linting
+      run: ./.github/scripts/run-linting.sh
+    
+    - name: Run unit tests
+      run: ./.github/scripts/run-tests.sh
+    
+    - name: Create summary report
+      run: |
+        echo "=== Code Quality Summary ===" > quality-results/summary.txt
+        echo "Generated: $(date)" >> quality-results/summary.txt
+        echo "Repository: ${{ github.repository }}" >> quality-results/summary.txt
+        echo "Branch: ${{ github.ref_name }}" >> quality-results/summary.txt
+        echo "Commit: ${{ github.sha }}" >> quality-results/summary.txt
+        echo "" >> quality-results/summary.txt
+        echo "Files generated:" >> quality-results/summary.txt
+        ls -la quality-results/ >> quality-results/summary.txt
+    
+    # STEP OUTPUTS: Create outputs that can be used by job outputs
+    # The 'id' field makes this step's outputs accessible via steps.count-reports.outputs.*
+    - name: Count generated reports
+      id: count-reports
+      run: |
+        REPORT_COUNT=$(ls quality-results/*.txt quality-results/*.log 2>/dev/null | wc -l)
+        SUMMARY_FILE="summary.txt"
+        # $GITHUB_OUTPUT is the modern way to set step outputs (replaces ::set-output::)
+        echo "count=$REPORT_COUNT" >> $GITHUB_OUTPUT
+        echo "summary=$SUMMARY_FILE" >> $GITHUB_OUTPUT
+        echo "Generated $REPORT_COUNT report files"
+    
+    # ARTIFACTS: Store files that persist after job completion
+    # - Available for download from GitHub UI
+    # - Can be shared between jobs in same workflow
+    # - Automatically compressed and stored
+    - name: Upload quality reports
+      uses: actions/upload-artifact@v4
+      with:
+        name: code-quality-reports    # Artifact name (must be unique in workflow)
+        path: quality-results/        # Directory/files to upload
+        retention-days: 3           # How long GitHub stores the artifact
+
+  # DEPENDENT JOB: Runs after code-quality-with-artifacts completes successfully
+  analyze-results:
+    needs: code-quality-with-artifacts  # Job dependency - waits for this job to finish
+    runs-on: ubuntu-latest
+    
+    steps:
+    # DOWNLOAD ARTIFACTS: Retrieve files uploaded by previous job
+    # Downloads are extracted to specified path
+    - name: Download quality reports
+      uses: actions/download-artifact@v4
+      with:
+        name: code-quality-reports    # Must match upload artifact name
+        path: downloaded-reports/     # Where to extract files
+    
+    # ACCESS JOB OUTPUTS: Use data from previous job
+    # Syntax: ${{ needs.job-name.outputs.output-name }}
+    - name: Display job outputs
+      run: |
+        echo "Retrieved from previous job:"
+        echo "Report count: ${{ needs.code-quality-with-artifacts.outputs.report-count }}"
+        echo "Summary file: ${{ needs.code-quality-with-artifacts.outputs.summary-file }}"
+        echo "Verifying summary file exists: downloaded-reports/${{ needs.code-quality-with-artifacts.outputs.summary-file }}"
+        if [ -f "downloaded-reports/${{ needs.code-quality-with-artifacts.outputs.summary-file }}" ]; then
+          echo "Summary file found"
+        else
+          echo "Summary file not found"
+        fi
+    
+    # EXTERNAL SCRIPTS: Keep workflow clean by using separate script files
+    # Scripts are executable files in .github/scripts/ directory
+    - name: Analyze and display results
+      run: ./.github/scripts/analyze-reports.sh

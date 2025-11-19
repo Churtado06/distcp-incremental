@@ -3,9 +3,13 @@ name: Code Quality Checks and Deployment
 on: 
   push:
     branches:
-      - main
+      #- main
       - 'dev-*' # All branches with `dev-` prefix
       - 'feature/**' # Branches named feature/...
+    paths-ignore: 
+      - '.github/workflows/**'
+      - 'README.md'
+      - 'docs/**'
       
   pull_request:
     # This is the default
@@ -15,7 +19,9 @@ on:
       - main
     # The workflow will not be triggered if there were changes in this folder
     paths-ignore: 
-      - '.github/workflow'
+      - '.github/workflows/**'
+      - 'README.md'
+      - 'docs/**'
   workflow_dispatch:
 
 jobs:
@@ -68,4 +74,7 @@ jobs:
       run: |
         echo "Deployment in progress ..."
         echo "aws s3 sync ./distcp-incremental-tech-talk/ s3://my-bucket/ --delete "
-        echo "Access to github context: ${{ toJson(github) }}"
+        # echo "Access to github context: ${{ toJson(github) }}"
+        echo "Branch: ${{ github.ref_name }}"
+        echo "Commit: ${{ github.sha }}"
+        echo "Actor: ${{ github.actor }}"
