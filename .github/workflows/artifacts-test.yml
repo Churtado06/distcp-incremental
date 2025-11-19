@@ -109,12 +109,18 @@ jobs:
         path: quality-results/        # Directory/files to upload
         retention-days: 3           # How long GitHub stores the artifact
 
+
+
   # DEPENDENT JOB: Runs after code-quality-with-artifacts completes successfully
   analyze-results:
     needs: code-quality-with-artifacts  # Job dependency - waits for this job to finish
     runs-on: ubuntu-latest
     
     steps:
+
+    - name: Checkout code
+      uses: actions/checkout@v4
+
     # DOWNLOAD ARTIFACTS: Retrieve files uploaded by previous job
     # Downloads are extracted to specified path
     - name: Download quality reports
