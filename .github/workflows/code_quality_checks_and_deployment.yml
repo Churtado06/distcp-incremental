@@ -73,8 +73,7 @@ jobs:
     - name: Deploy the latest version
       run: |
         echo "Deployment in progress ..."
-        echo "aws s3 sync ./distcp-incremental-tech-talk/ s3://my-bucket/ --delete "
-        # echo "Access to github context: ${{ toJson(github) }}"
+        echo "aws s3 sync ./distcp-incremental-tech-talk/ s3://my-bucket/ --delete"
         echo "Branch: ${{ github.ref_name }}"
         echo "Commit: ${{ github.sha }}"
         echo "Actor: ${{ github.actor }}"

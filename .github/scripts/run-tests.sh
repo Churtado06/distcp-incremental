@@ -3,13 +3,13 @@
 RESULTS_DIR="quality-results"
 REPORT_FILE="$RESULTS_DIR/test-report.txt"
 
-echo "=== Unit Test Results ===" > "$REPORT_FILE"
-echo "Tests started: $(date)" >> "$REPORT_FILE"
+echo "=== Unit Test Results ===" | tee "$REPORT_FILE"
+echo "Tests started: $(date)" | tee -a "$REPORT_FILE"
 
 if [ -d "tests" ]; then
-    pytest tests/ -v >> "$REPORT_FILE" 2>&1 || true
+    pytest tests/ -v 2>&1 | tee -a "$REPORT_FILE" || true
 else
-    echo "No tests directory found" >> "$REPORT_FILE"
+    echo "No tests directory found" | tee -a "$REPORT_FILE"
 fi
 
-echo "Tests completed: $(date)" >> "$REPORT_FILE"
+echo "Tests completed: $(date)" | tee -a "$REPORT_FILE"
