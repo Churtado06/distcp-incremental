@@ -1,0 +1,121 @@
+name: DistCP Environment Variables Test
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'dev'
+        type: choice
+        options:
+        - dev
+        - staging
+        - prod
+      user_name:
+        description: 'GCP Username'
+        required: true
+        default: 'churtado_gcp1'
+      bucket_name:
+        description: 'Source bucket name'
+        required: true
+        default: 'source-files-data-distcp'
+
+env:
+  # Global environment variables
+  PYTHON_VERSION: '3.9'
+  GCP_REGION: 'us-central1'
+
+jobs:
+  test-with-env-vars:
+    runs-on: ubuntu-latest
+    
+    # Job-level environment variables
+    env:
+      USER_NAME_GOOGLE: ${{ github.event.inputs.user_name }}
+      SOURCE_FILES_DATA_BUCKET: ${{ github.event.inputs.bucket_name }}
+      ENVIRONMENT: ${{ github.event.inputs.environment }}
+      COMPOSER_URL_ID: '3eed80d0e54a4be78b9dd56d2b2f63bd'
+      DAG_ID: 'distcp_incremental_data_load'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    
+    - name: Cache pip dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('distcp-incremental-tech-talk/cloud_function_composer2/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+    
+    - name: Install dependencies
+      run: |
+        pip install -r .github/requirements.txt
+    
+    - name: Display environment variables
+      run: |
+        echo "=== Environment Variables ==="
+        echo "Environment: $ENVIRONMENT"
+        echo "User: $USER_NAME_GOOGLE"
+        echo "Bucket: $SOURCE_FILES_DATA_BUCKET"
+        echo "Region: $GCP_REGION"
+        echo "Composer URL ID: $COMPOSER_URL_ID"
+        echo "DAG ID: $DAG_ID"
+    
+    - name: Test shell script with env vars
+      run: |
+        echo "=== Testing Shell Script ==="
+        # Make script executable and test with our env vars
+        chmod +x distcp-incremental-tech-talk/initialize_onprem_cluster.sh
+        # Dry run - just show what would be executed
+        echo "Script would use USER_NAME_GOOGLE: $USER_NAME_GOOGLE"
+        echo "Script would use SOURCE_FILES_DATA_BUCKET: $SOURCE_FILES_DATA_BUCKET"
+    
+    - name: Run flake8 with environment context
+      env:
+        FLAKE8_CONFIG: '--max-line-length=88 --extend-ignore=E203,W503'
+      run: |
+        echo "=== Flake8 Linting (Environment: $ENVIRONMENT) ==="
+        flake8 distcp-incremental-tech-talk/cloud_function_composer2/ $FLAKE8_CONFIG
+        echo "Flake8 completed for $ENVIRONMENT environment"
+    
+    - name: Run pytest with environment variables
+      env:
+        PYTEST_ENV: ${{ env.ENVIRONMENT }}
+        TEST_USER: ${{ env.USER_NAME_GOOGLE }}
+        TEST_BUCKET: ${{ env.SOURCE_FILES_DATA_BUCKET }}
+      run: |
+        echo "=== Running Tests (Environment: $PYTEST_ENV) ==="
+        pytest distcp-incremental-tech-talk/tests/ -v -s
+    
+  deploy-simulation:
+    needs: test-with-env-vars
+    runs-on: ubuntu-latest
+    if: github.event.inputs.environment != 'prod'
+    
+    env:
+      DEPLOY_ENV: ${{ github.event.inputs.environment }}
+      
+    steps:
+    - name: Simulate deployment
+      run: |
+        echo "=== Deployment Simulation ==="
+        echo "Deploying to environment: $DEPLOY_ENV"
+        echo "Would deploy with the following configuration:"
+        echo "- User: ${{ github.event.inputs.user_name }}"
+        echo "- Bucket: ${{ github.event.inputs.bucket_name }}"
+        echo "- Region: $GCP_REGION"
+        
+        if [ "$DEPLOY_ENV" = "prod" ]; then
+          echo "Production deployment blocked in this workflow"
+          exit 1
+        else
+          echo "Deployment to $DEPLOY_ENV would succeed"
+        fi

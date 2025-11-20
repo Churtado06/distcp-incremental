@@ -1,11 +1,11 @@
 #!/bin/sh
-export USER_NAME_GOOGLE=churtado_gcp1
+export USER_NAME_GOOGLE="${USER_NAME_GOOGLE:-churtado_gcp1}"
 now=$(date +%s)
 src=hdfs://cluster-src-m/user/$USER_NAME_GOOGLE/
 dst=gs://dest-distcp-data/
 dst_text_file=gs://audit-files-distcp/
 
-hdfs dfs -ls -R $src | grep "^d" | while read -r f; do
+"hdfs dfs -ls -R $src" | grep "^d" | while read -r f; do
   
   dir_date_day=$(echo "$f" | awk '{print $6}')
   dir_date_hour=$(echo "$f" | awk '{print $7}')
