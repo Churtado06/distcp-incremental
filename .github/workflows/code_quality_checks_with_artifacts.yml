@@ -20,6 +20,10 @@ on:
     # The Workflow will run only for PRs created againts main branch
     branches:
       - main
+    paths-ignore: 
+    - '.github/workflows/**'
+    - 'README.md'
+    - 'docs/**'
 
 jobs:
   code-quality-with-artifacts:
