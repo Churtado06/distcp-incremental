@@ -1,2 +1,3 @@
 venv_install
 .distcp_venv
+tests/__pycache__

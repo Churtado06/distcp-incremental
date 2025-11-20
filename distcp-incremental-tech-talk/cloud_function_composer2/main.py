@@ -43,12 +43,12 @@ def trigger_dag_gcf(data, context=None):
     )
     # Get DAG ID from environment variable
     dag_id = os.getenv('DAG_ID', 'distcp_incremental_data_load')
-    
+
     # Add environment context to data
     environment = os.getenv('ENVIRONMENT', 'dev')
     user_name = os.getenv('USER_NAME_GOOGLE', 'default_user')
     bucket_name = os.getenv('SOURCE_FILES_DATA_BUCKET', 'default-bucket')
-    
+
     # Enhance data with environment variables
     enhanced_data = {
         **data,
