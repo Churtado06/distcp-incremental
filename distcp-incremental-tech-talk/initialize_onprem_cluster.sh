@@ -1,6 +1,14 @@
 #!/bin/sh
-export USER_NAME_GOOGLE=churtado_gcp1
-export SOURCE_FILES_DATA_BUCKET=source-files-data-distcp
+
+# Use environment variables with defaults
+USER_NAME_GOOGLE=${USER_NAME_GOOGLE:-churtado_gcp1}
+SOURCE_FILES_DATA_BUCKET=${SOURCE_FILES_DATA_BUCKET:-source-files-data-distcp}
+ENVIRONMENT=${ENVIRONMENT:-dev}
+
+echo "Initializing cluster for environment: $ENVIRONMENT"
+echo "User: $USER_NAME_GOOGLE"
+echo "Bucket: $SOURCE_FILES_DATA_BUCKET"
+
 cd /home/$USER_NAME_GOOGLE || exit
 
 gsutil cp gs://$SOURCE_FILES_DATA_BUCKET/input_data/titanic.csv /home/$USER_NAME_GOOGLE/titanic.csv

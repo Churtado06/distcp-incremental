@@ -18,6 +18,7 @@ using Cloud Functions.
 """
 
 
+import os
 import composer2_airflow_rest_api
 
 
@@ -34,17 +35,27 @@ def trigger_dag_gcf(data, context=None):
     https://cloud.google.com/functions/docs/writing/background#function_parameters
     """
 
-    # TODO(developer): replace with your values
-    # Replace web_server_url with the Airflow web server address. To obtain this
-    # URL, run the following command for your environment:
-    # gcloud composer environments describe example-environment \
-    #  --location=your-composer-region \
-    #  --format="value(config.airflowUri)"
-    url = '3eed80d0e54a4be78b9dd56d2b2f63bd'
+    # Get configuration from environment variables
+    url = os.getenv('COMPOSER_URL_ID', '3eed80d0e54a4be78b9dd56d2b2f63bd')
+    region = os.getenv('GCP_REGION', 'us-central1')
     web_server_url = (
-        f"https://{url}-dot-us-central1.composer.googleusercontent.com"
+        f"https://{url}-dot-{region}.composer.googleusercontent.com"
     )
-    # Replace with the ID of the DAG that you want to run.
-    dag_id = 'distcp_incremental_data_load'
+    # Get DAG ID from environment variable
+    dag_id = os.getenv('DAG_ID', 'distcp_incremental_data_load')
+    
+    # Add environment context to data
+    environment = os.getenv('ENVIRONMENT', 'dev')
+    user_name = os.getenv('USER_NAME_GOOGLE', 'default_user')
+    bucket_name = os.getenv('SOURCE_FILES_DATA_BUCKET', 'default-bucket')
+    
+    # Enhance data with environment variables
+    enhanced_data = {
+        **data,
+        'environment': environment,
+        'user_name': user_name,
+        'source_bucket': bucket_name,
+        'region': region
+    }
 
-    composer2_airflow_rest_api.trigger_dag(web_server_url, dag_id, data)
+    composer2_airflow_rest_api.trigger_dag(web_server_url, dag_id, enhanced_data)
