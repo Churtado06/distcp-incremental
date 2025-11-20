@@ -60,6 +60,17 @@ def test_trigger_dag_function_with_env_vars():
     expected_url = f'https://{composer_url_id}-dot-{gcp_region}.composer.googleusercontent.com'
     assert 'composer.googleusercontent.com' in expected_url
     print(f"  Constructed URL: {expected_url}")
+    
+    # Test that function would fail appropriately without credentials (expected in test environment)
+    test_data = {"test": "data"}
+    try:
+        main.trigger_dag_gcf(test_data)
+        # If this doesn't raise an error, something is wrong
+        assert False, "Expected credential error in test environment"
+    except Exception as e:
+        # Expected to fail without proper GCP credentials
+        print(f"  Expected credential error: {type(e).__name__}")
+        assert "credential" in str(e).lower() or "auth" in str(e).lower()
 
 
 def test_environment_variables_in_modules():

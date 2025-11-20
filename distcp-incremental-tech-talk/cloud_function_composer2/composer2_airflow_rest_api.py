@@ -8,7 +8,13 @@ import requests
 # constructed at start-up time and used throughout
 # https://cloud.google.com/apis/docs/client-libraries-best-practices
 AUTH_SCOPE = "https://www.googleapis.com/auth/cloud-platform"
-CREDENTIALS, _ = google.auth.default(scopes=[AUTH_SCOPE])
+
+# Handle credentials initialization for testing environments
+try:
+    CREDENTIALS, _ = google.auth.default(scopes=[AUTH_SCOPE])
+except google.auth.exceptions.DefaultCredentialsError:
+    # In testing or environments without GCP credentials
+    CREDENTIALS = None
 
 
 def make_composer2_web_server_request(
@@ -25,6 +31,11 @@ def make_composer2_web_server_request(
                   If no timeout is provided, it is set to 90 by default.
     """
 
+    if CREDENTIALS is None:
+        raise google.auth.exceptions.DefaultCredentialsError(
+            "No GCP credentials available. This function requires proper GCP authentication."
+        )
+    
     authed_session = AuthorizedSession(CREDENTIALS)
 
     # Set the default timeout, if missing

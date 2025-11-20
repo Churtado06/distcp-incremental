@@ -1,3 +1,6 @@
 venv_install
 .distcp_venv
 tests/__pycache__
+distcp-incremental-tech-talk/tests/__pycache__
+distcp-incremental-tech-talk/cloud_function_composer2/__pycache__
+local_tests
