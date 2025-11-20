@@ -1,3 +1,6 @@
 pytest==7.4.3
 bandit==1.7.5
 flake8==6.1.0
+
+# Include project dependencies
+-r ../distcp-incremental-tech-talk/cloud_function_composer2/requirements.txt
