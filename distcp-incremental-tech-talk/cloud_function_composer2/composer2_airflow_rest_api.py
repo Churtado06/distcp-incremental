@@ -33,9 +33,10 @@ def make_composer2_web_server_request(
 
     if CREDENTIALS is None:
         raise google.auth.exceptions.DefaultCredentialsError(
-            "No GCP credentials available. This function requires proper GCP authentication."
+            "No GCP credentials available. "
+            "This function requires proper GCP authentication."
         )
-    
+
     authed_session = AuthorizedSession(CREDENTIALS)
 
     # Set the default timeout, if missing
