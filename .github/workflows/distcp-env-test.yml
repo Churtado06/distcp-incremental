@@ -90,6 +90,13 @@ jobs:
         PYTEST_ENV: ${{ env.ENVIRONMENT }}
         TEST_USER: ${{ env.USER_NAME_GOOGLE }}
         TEST_BUCKET: ${{ env.SOURCE_FILES_DATA_BUCKET }}
+        # Pass all required environment variables to pytest
+        USER_NAME_GOOGLE: ${{ env.USER_NAME_GOOGLE }}
+        SOURCE_FILES_DATA_BUCKET: ${{ env.SOURCE_FILES_DATA_BUCKET }}
+        ENVIRONMENT: ${{ env.ENVIRONMENT }}
+        COMPOSER_URL_ID: ${{ env.COMPOSER_URL_ID }}
+        DAG_ID: ${{ env.DAG_ID }}
+        GCP_REGION: ${{ env.GCP_REGION }}
       run: |
         echo "=== Running Tests (Environment: $PYTEST_ENV) ==="
         pytest distcp-incremental-tech-talk/tests/ -v -s
