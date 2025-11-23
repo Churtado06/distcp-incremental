@@ -8,22 +8,22 @@ name: Code Quality with Artifacts
 
 on:
   workflow_dispatch:  # Manual trigger from GitHub UI
-  push:
-    branches: [main, 'dev-*', 'feature/**']
-    paths-ignore: 
-    - '.github/workflows/**'
-    - 'README.md'
-    - 'docs/**'
-  pull_request:
-    # This is the default
-    types: [opened, reopened, synchronize]
-    # The Workflow will run only for PRs created againts main branch
-    branches:
-      - main
-    paths-ignore: 
-    - '.github/workflows/**'
-    - 'README.md'
-    - 'docs/**'
+  #push:
+  #  branches: [main, 'dev-*', 'feature/**']
+  #  paths-ignore: 
+  #  - '.github/workflows/**'
+  #  - 'README.md'
+  #  - 'docs/**'
+  #pull_request:
+  #  # This is the default
+  #  types: [opened, reopened, synchronize]
+  #  # The Workflow will run only for PRs created againts main branch
+  #  branches:
+  #    - main
+  #  paths-ignore: 
+  #  - '.github/workflows/**'
+  #  - 'README.md'
+  #  - 'docs/**'
 
 jobs:
   code-quality-with-artifacts:

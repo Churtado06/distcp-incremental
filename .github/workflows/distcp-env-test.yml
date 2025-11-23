@@ -16,15 +16,13 @@ on:
         description: 'GCP Username'
         required: true
         default: 'churtado_gcp1'
-      bucket_name:
-        description: 'Source bucket name'
-        required: true
-        default: 'source-files-data-distcp'
+      
 
 env:
   # Global environment variables
   PYTHON_VERSION: '3.9'
-  GCP_REGION: 'us-central1'
+  GCP_REGION: ${{ secrets.REGION }} # us-central1
+  BUCKET_NAME: ${{ secrets.BUCKET_NAME }} # source-files-data-distcp
 
 jobs:
   test-with-env-vars:
@@ -32,11 +30,12 @@ jobs:
     
     # Job-level environment variables
     env:
-      USER_NAME_GOOGLE: ${{ github.event.inputs.user_name }}
-      SOURCE_FILES_DATA_BUCKET: ${{ github.event.inputs.bucket_name }}
       ENVIRONMENT: ${{ github.event.inputs.environment }}
-      COMPOSER_URL_ID: '3eed80d0e54a4be78b9dd56d2b2f63bd'
+      USER_NAME_GOOGLE: ${{ github.event.inputs.user_name }}
+      SOURCE_FILES_DATA_BUCKET: ${{ secrets.BUCKET_NAME }} # source-files-data-distcp
+      COMPOSER_URL_ID: ${{ secrets.COMPOSER_URL_ID }} # 3eed80d0e54a4be78b9dd56d2b2f63bd
       DAG_ID: 'distcp_incremental_data_load'
+      GCP_REGION: ${{ secrets.REGION }} # us-central1
     
     steps:
     - name: Checkout code
@@ -116,7 +115,7 @@ jobs:
         echo "Deploying to environment: $DEPLOY_ENV"
         echo "Would deploy with the following configuration:"
         echo "- User: ${{ github.event.inputs.user_name }}"
-        echo "- Bucket: ${{ github.event.inputs.bucket_name }}"
+        echo "- Bucket: $SOURCE_FILES_DATA_BUCKET"
         echo "- Region: $GCP_REGION"
         
         if [ "$DEPLOY_ENV" = "prod" ]; then
