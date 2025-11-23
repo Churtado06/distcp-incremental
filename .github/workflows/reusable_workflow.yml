@@ -1,0 +1,58 @@
+name: Reusable Workflow
+
+on: 
+  workflow_call:
+    inputs:
+      artifact_name: 
+        description: Name of the deployable artifact file
+        required: true
+        default: dist
+        type: string
+      artifact_path:
+        description: Path where the artifact_name is located
+        required: true
+        type: string
+      report_count:
+        description: Number of reports generated
+        required: false
+        type: string
+      summary_file:
+        description: Name of the summary file
+        required: false
+        type: string
+    secrets:
+      secret_name:
+        required: false
+
+jobs: 
+  deploy: 
+    runs-on: ubuntu-latest
+    steps:
+    - name: Get artifacts
+      uses: actions/download-artifact@v4
+      with: 
+        name: ${{ inputs.artifact_name }}
+        path: ${{ inputs.artifact_path }}
+    
+    - name: Output information
+      run: | 
+        echo "Deploying and Uploading"
+        echo "Artifact: ${{ inputs.artifact_name }}"
+        echo "Path: ${{ inputs.artifact_path }}"
+    
+    - name: Display job outputs
+      run: |
+        echo "Retrieved from previous job:"
+        echo "Report count: ${{ inputs.report_count }}"
+        echo "Summary file: ${{ inputs.summary_file }}"
+        echo "Verifying summary file exists: ${{ inputs.artifact_path }}/${{ inputs.summary_file }}"
+        if [ -f "${{ inputs.artifact_path }}/${{ inputs.summary_file }}" ]; then
+          echo "Summary file found"
+        else
+          echo "Summary file not found"
+        fi
+    
+    - name: List downloaded files
+      run: |
+        echo "Files in artifact path:"
+        ls -la "${{ inputs.artifact_path }}/" || echo "Directory not found"

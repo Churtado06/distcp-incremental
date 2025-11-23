@@ -78,6 +78,7 @@ jobs:
         echo "Script would use SOURCE_FILES_DATA_BUCKET: $SOURCE_FILES_DATA_BUCKET"
     
     - name: Run flake8 with environment context
+      id: flake8_validation
       env:
         FLAKE8_CONFIG: '--max-line-length=88 --extend-ignore=E203,W503'
       run: |
@@ -86,6 +87,7 @@ jobs:
         echo "Flake8 completed for $ENVIRONMENT environment"
     
     - name: Run pytest with environment variables
+      if: failure() && steps.flake8_validation.outcome == 'failure'
       env:
         PYTEST_ENV: ${{ env.ENVIRONMENT }}
         TEST_USER: ${{ env.USER_NAME_GOOGLE }}
