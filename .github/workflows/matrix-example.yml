@@ -1,0 +1,174 @@
+name: Matrix Strategy Examples
+
+on:
+  workflow_dispatch:
+  #push:
+  #  branches: [main]
+
+jobs:
+  # Example 1: Multi-Platform Testing
+  cross-platform-test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        python-version: ['3.8', '3.9', '3.10', '3.11']
+        # This creates 12 jobs (3 OS × 4 Python versions)
+    
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+    
+    - name: Display environment
+      run: |
+        echo "OS: ${{ matrix.os }}"
+        echo "Python: ${{ matrix.python-version }}"
+        python --version
+    
+    - name: Install dependencies
+      run: pip install -r .github/requirements.txt
+    
+    - name: Run tests
+      run: pytest distcp-incremental-tech-talk/tests/ -v
+
+  # Example 2: Multi-Environment Deployment
+  deploy-to-environments:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        environment: [dev, staging, prod]
+        region: [us-east-1, us-west-2, eu-west-1]
+        # This creates 9 jobs (3 environments × 3 regions)
+    
+    environment: ${{ matrix.environment }}
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Deploy to ${{ matrix.environment }} in ${{ matrix.region }}
+      run: |
+        echo "Deploying to environment: ${{ matrix.environment }}"
+        echo "Region: ${{ matrix.region }}"
+        echo "Would run: aws deploy --env ${{ matrix.environment }} --region ${{ matrix.region }}"
+
+  # Example 3: Database Testing
+  database-compatibility:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        database:
+          - name: postgres
+            version: '13'
+            port: 5432
+          - name: postgres
+            version: '14'
+            port: 5432
+          - name: mysql
+            version: '8.0'
+            port: 3306
+          - name: mysql
+            version: '5.7'
+            port: 3306
+    
+    services:
+      database:
+        image: ${{ matrix.database.name }}:${{ matrix.database.version }}
+        ports:
+          - ${{ matrix.database.port }}:${{ matrix.database.port }}
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Test with ${{ matrix.database.name }} ${{ matrix.database.version }}
+      run: |
+        echo "Testing with ${{ matrix.database.name }} version ${{ matrix.database.version }}"
+        echo "Port: ${{ matrix.database.port }}"
+
+  # Example 4: Code Quality Matrix (Your Use Case)
+  quality-checks-matrix:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        check-type: [linting, security, testing]
+        python-version: ['3.9', '3.10']
+        include:
+          # Add specific configurations
+          - check-type: linting
+            tool: flake8
+            config: '--max-line-length=88 --extend-ignore=E203,W503'
+          - check-type: security
+            tool: bandit
+            config: '-r distcp-incremental-tech-talk/cloud_function_composer2/'
+          - check-type: testing
+            tool: pytest
+            config: 'distcp-incremental-tech-talk/tests/ -v'
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+    
+    - name: Install dependencies
+      run: pip install -r .github/requirements.txt
+    
+    - name: Run ${{ matrix.check-type }} with ${{ matrix.tool }}
+      run: |
+        echo "Running ${{ matrix.check-type }} check"
+        echo "Tool: ${{ matrix.tool }}"
+        echo "Config: ${{ matrix.config }}"
+        ${{ matrix.tool }} ${{ matrix.config }}
+
+  # Example 5: Exclude/Include Combinations
+  selective-matrix:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        node-version: [16, 18, 20]
+        exclude:
+          # Exclude Node 16 on Windows (unsupported example)
+          - os: windows-latest
+            node-version: 16
+        include:
+          # Add specific combination with extra config
+          - os: ubuntu-latest
+            node-version: 18
+            experimental: true
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Display matrix values
+      run: |
+        echo "OS: ${{ matrix.os }}"
+        echo "Node: ${{ matrix.node-version }}"
+        echo "Experimental: ${{ matrix.experimental }}"
+
+  # Example 6: Dynamic Matrix from JSON
+  dynamic-matrix:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+    - id: set-matrix
+      run: |
+        # In real scenario, this could come from API, file, etc.
+        echo 'matrix={"environment":["dev","staging"],"region":["us-east-1","eu-west-1"]}' >> $GITHUB_OUTPUT
+
+  use-dynamic-matrix:
+    needs: dynamic-matrix
+    runs-on: ubuntu-latest
+    strategy:
+      matrix: ${{ fromJson(needs.dynamic-matrix.outputs.matrix) }}
+    
+    steps:
+    - name: Deploy with dynamic matrix
+      run: |
+        echo "Environment: ${{ matrix.environment }}"
+        echo "Region: ${{ matrix.region }}"
