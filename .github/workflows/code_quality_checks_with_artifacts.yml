@@ -156,16 +156,6 @@ jobs:
     # Scripts are executable files in .github/scripts/ directory
     - name: Analyze and display results
       run: ./.github/scripts/analyze-reports.sh
-  # This job will run if the previous job failed
-  report:
-    needs: analyze-results
-    if: failure()
-    runs-on: ubuntu-latest
-    steps:
-    - name: Output information
-      run: |
-        echo "Something went wrong"
-        echo "${{ toJSON(github) }}"
 
   analyze-results-with-reusable-workflow:
     needs: code-quality-with-artifacts  # Job dependency - waits for this job to finish
@@ -177,3 +167,14 @@ jobs:
       summary_file: ${{ needs.code-quality-with-artifacts.outputs.summary-file }}
     #secrets:
     #  secret_name: ${{ secrets.SECRET_NAME }}
+
+  # This job will run only if the previous jobs failed
+  report:
+    needs: [analyze-results,analyze-results-with-reusable-workflow]
+    if: failure()
+    runs-on: ubuntu-latest
+    steps:
+    - name: Output information
+      run: |
+        echo "Something went wrong"
+        echo "${{ toJSON(github) }}"
