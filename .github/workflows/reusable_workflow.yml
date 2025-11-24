@@ -44,8 +44,9 @@ jobs:
       run: |
         echo "Retrieved from previous job:"
         echo "Report count: ${{ inputs.report_count }}"
+        echo "Artifact path: ${{ inputs.artifact_path }}"
         echo "Summary file: ${{ inputs.summary_file }}"
-        echo "Verifying summary file exists: ${{ inputs.artifact_path }}/${{ inputs.summary_file }}"
+        echo "Verifying summary file exists: ${{ inputs.artifact_path }}${{ inputs.summary_file }}"
         if [ -f "${{ inputs.artifact_path }}/${{ inputs.summary_file }}" ]; then
           echo "Summary file found"
         else
