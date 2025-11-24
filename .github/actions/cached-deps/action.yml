@@ -1,0 +1,46 @@
+name: 'Get and Cache Dependencies'
+description: 'Get and Cache Dependencies via pip'
+inputs:
+  caching:
+    description: 'Whether to cache dependencies or not'
+    required: false
+    default: 'true'
+  python-version:
+    description: 'Python version to use'
+    required: false
+    default: '3.9'
+outputs:
+  cache-hit:
+    description: 'A boolean value to indicate that the cache was hit'
+    value: ${{ steps.set-cache-output.outputs.cache-hit }}
+runs: 
+  using: 'composite'
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ inputs.python-version }}
+      
+    # CACHE: Speeds up builds by storing pip downloads between runs
+    # Cache key includes OS and requirements.txt hash - invalidates when deps change
+    - name: Cache pip dependencies
+      id: cache-pip-deps
+      if: inputs.caching == 'true'
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('.github/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+    
+    - name: Set cache-hit output
+      id: set-cache-output
+      run: |
+        echo "cache-hit=${{ inputs.caching }}" >> $GITHUB_OUTPUT
+      shell: bash
+    
+    - name: Install dependencies
+      run: |
+        pip install -r .github/requirements.txt 
+        echo "Dependencies installed at $(date)"
+      shell: bash

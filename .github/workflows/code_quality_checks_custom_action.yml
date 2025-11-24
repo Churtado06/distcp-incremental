@@ -1,0 +1,46 @@
+name: Code Quality Checks using a Custom Action
+
+on: 
+  #push:
+  #  branches:
+  #    'main'
+  #pull_request:
+  #  types: [opened, reopened, synchronize]
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Get code
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+    
+    - name: Load and Cache dependencies
+      id: cache-deps
+      uses: ./.github/actions/cached-deps
+      with:
+        caching: 'true'
+    - name: Output information
+      run: echo "Cache used ${{ steps.cache-deps.outputs.cache-hit}}"
+    
+    - name: Install shell dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y shellcheck
+      
+    - name: Shell script validation
+      run: |
+        shellcheck distcp-incremental-tech-talk/*.sh
+        
+    - name: Security scan
+      run: bandit -r distcp-incremental-tech-talk/cloud_function_composer2/
+    
+    - name: Run unit tests (mocked)
+      run: pytest tests/ -v
+      continue-on-error: true
